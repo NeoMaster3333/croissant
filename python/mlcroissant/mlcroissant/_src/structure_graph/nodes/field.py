@@ -1,5 +1,7 @@
 """Field module."""
 
+from typing import Any
+
 from rdflib import term
 from rdflib.namespace import SDO
 from typing_extensions import Self
@@ -11,7 +13,6 @@ from mlcroissant._src.core.context import CroissantVersion
 from mlcroissant._src.core.data_types import data_types_from_jsonld
 from mlcroissant._src.core.data_types import data_types_to_jsonld
 from mlcroissant._src.core.data_types import EXPECTED_DATA_TYPES
-from mlcroissant._src.core.types import JsonValue
 from mlcroissant._src.structure_graph.base_node import Node
 from mlcroissant._src.structure_graph.base_node import node_by_uuid
 from mlcroissant._src.structure_graph.nodes.source import Source
@@ -141,8 +142,10 @@ class Field(Node):
     source: Source = mlc_dataclasses.jsonld_field(
         default_factory=Source,
         description=(
-            "The data source of the field. This will generally reference a `FileObject`"
-            " or `FileSet`'s contents (e.g., a specific column of a table)."
+            "The data source of the field. Leaf fields must provide either a"
+            " `source` or a constant `value`, but never both. This will generally"
+            " reference a `FileObject` or `FileSet`'s contents (e.g., a specific"
+            " column of a table)."
         ),
         input_types=[Source],
         url=constants.ML_COMMONS_SOURCE,
@@ -154,12 +157,11 @@ class Field(Node):
         from_jsonld=lambda ctx, fields: Field.from_jsonld(ctx, fields),
         url=constants.ML_COMMONS_SUB_FIELD,
     )
-    value: JsonValue | None = mlc_dataclasses.jsonld_field(
+    value: Any | None = mlc_dataclasses.jsonld_field(
         default=None,
         description=(
-            "A constant value for this Field applied to every record of the RecordSet. "
-            "If both `source` and `value` are present, `value` acts as a default when "
-            "the sourced value is missing."
+            "A constant value applied to every record of the RecordSet. Leaf fields"
+            " must define either `value` or `source`, but never both."
         ),
         # Accept any JSON-serializable value (str,int,float,bool,dict,list,None).
         # We intentionally omit input_types so non-text JSON values are allowed.
@@ -177,11 +179,12 @@ class Field(Node):
         has_value = self.value is not None
         has_source = bool(self.source)
         if has_value and has_source:
-            self.add_warning(
-                f"Field {self.uuid} defines both `source` and `value`. `source` takes"
-                " precedence."
+            self.add_error(
+                f"Field {self.uuid} defines both `source` and `value`. Please specify"
+                " exactly one of them."
             )
-        if not has_value or has_source:
+            self.source.check_source(self.add_error)
+        elif has_source:
             self.source.check_source(self.add_error)
         self._standardize_data_types()
         if self.array_shape and not self.is_array:
