@@ -129,6 +129,14 @@
           "name": "examples/name",
           "description": "The first column contains the name of the object.",
           "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "enum.csv"
+            },
+            "extract": {
+              "column": "name"
+            }
+          },
           "references": {
             "fileObject": {
               "@id": "enum.csv"

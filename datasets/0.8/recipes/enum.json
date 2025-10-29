@@ -102,6 +102,12 @@
           "name": "name",
           "description": "The first column contains the name of the object.",
           "dataType": "sc:Text",
+          "source": {
+            "distribution": "enum.csv",
+            "extract": {
+              "column": "name"
+            }
+          },
           "references": {
             "distribution": "enum.csv",
             "extract": {

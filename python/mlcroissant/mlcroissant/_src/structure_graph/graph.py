@@ -26,6 +26,7 @@ import networkx as nx
 from mlcroissant._src.core import constants
 from mlcroissant._src.core.types import Json
 from mlcroissant._src.structure_graph.base_node import Node
+from mlcroissant._src.structure_graph.base_node import node_by_uuid
 from mlcroissant._src.structure_graph.nodes.field import Field
 from mlcroissant._src.structure_graph.nodes.file_object import FileObject
 from mlcroissant._src.structure_graph.nodes.file_set import FileSet
@@ -105,25 +106,12 @@ def _get_entry_nodes(graph: nx.MultiDiGraph, node: Node) -> list[Node]:
     for node, indegree in graph.in_degree(graph.nodes()):
         if indegree == 0:
             entry_nodes.append(node)  # pytype: disable=container-type-mismatch
-    # Fields should usually not be entry nodes, except if they have subFields. So we
-    # check for this:
-    for node in entry_nodes:
-        if isinstance(node, RecordSet) and not node.data:
-            for field in node.fields:
-                if not field.source:
-                    if field.value is None:
-                        field.add_error(
-                            f'Field "{field.uuid}" should define exactly one of '
-                            f"{constants.ML_COMMONS_SOURCE(ctx)} or "
-                            f"{constants.SCHEMA_ORG_VALUE}. Neither is provided."
-                        )
-                    elif not field.data_types:
-                        field.add_error(
-                            f'Field "{field.uuid}" defines a constant value but omits'
-                            f" {constants.ML_COMMONS_DATA_TYPE(ctx)}. Please declare"
-                            " the data type."
-                        )
-                else:
+    for entry_node in entry_nodes:
+        if isinstance(entry_node, RecordSet) and not entry_node.data:
+            for field in entry_node.fields:
+                if field.sub_fields:
+                    continue
+                if field.source and not node_by_uuid(ctx, field.source.uuid):
                     field.add_error(
                         f"Malformed source data: {field.source.uuid}. It does not refer"
                         " to any existing node. Have you used"

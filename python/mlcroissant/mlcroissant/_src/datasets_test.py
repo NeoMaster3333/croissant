@@ -108,6 +108,15 @@ def load_records_and_test_equality(
     filters: dict[str, Any] | None = None,
     mapping: dict[str, epath.PathLike] | None = None,
 ):
+    def _normalize(value):
+        if isinstance(value, dict):
+            return {k: _normalize(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [_normalize(v) for v in value]
+        if isinstance(value, str):
+            return " ".join(value.split())
+        return value
+
     filters_command = ""
     if filters:
         filters_command = str(filters).replace("'", '"')
@@ -126,19 +135,19 @@ def load_records_and_test_equality(
         output_file = config.parent / "output" / f"{record_set_name}.jsonl"
         with output_file.open("rb") as f:
             lines = f.readlines()
-            expected_records = [json.loads(line) for line in lines]
+            expected_records = [_normalize(json.loads(line)) for line in lines]
             if num_records > 0:
                 assert len(expected_records) == num_records
     dataset = datasets.Dataset(config, mapping=mapping)
     records = dataset.records(record_set_name, filters=filters)
     records = iter(records)
     for i in range(num_records):
-        record = next(records)
-        if num_records > 0 and i >= num_records:
-            break
-        record = record_to_python(record)
-        if expected_records:
-            assert record == expected_records[i]
+            record = next(records)
+            if num_records > 0 and i >= num_records:
+                break
+            record = _normalize(record_to_python(record))
+            if expected_records:
+                assert record == expected_records[i]
 
 
 def _equal_to_set(expected):

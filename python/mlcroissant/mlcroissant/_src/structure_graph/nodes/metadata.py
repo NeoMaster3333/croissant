@@ -323,6 +323,35 @@ class Metadata(Node):
                     fields=field.sub_fields, parents=field_parents
                 )
 
+    def _validate_field_sources(self, fields: list[Field], *, record_set_has_data: bool):
+        """Ensures leaf fields define consistent `source` / `value` usage."""
+        for field in fields:
+            if field.sub_fields:
+                self._validate_field_sources(
+                    field.sub_fields, record_set_has_data=record_set_has_data
+                )
+                continue
+            has_value = field.value is not None
+            has_source = bool(field.source)
+            if has_value and has_source:
+                field.add_error(
+                    f"Field {field.uuid} defines both `{constants.ML_COMMONS_SOURCE(self.ctx)}`"
+                    f" and `{constants.SCHEMA_ORG_VALUE}`. They are mutually exclusive."
+                )
+            elif not record_set_has_data:
+                if not has_value and not has_source:
+                    field.add_error(
+                        f'Field "{field.uuid}" should define exactly one of'
+                        f" {constants.ML_COMMONS_SOURCE(self.ctx)} or"
+                        f" {constants.SCHEMA_ORG_VALUE}. Neither is provided."
+                    )
+                elif has_value and not field.data_types:
+                    field.add_error(
+                        f'Field "{field.uuid}" defines a constant value but omits'
+                        f" {constants.ML_COMMONS_DATA_TYPE(self.ctx)}. Please declare"
+                        " the data type."
+                    )
+
     def __post_init__(self):
         """Checks arguments of the node and setup ID."""
         Node.__post_init__(self)
@@ -332,6 +361,9 @@ class Metadata(Node):
         for record_set in self.record_sets:
             record_set.parents = [self]
             self._define_field_parents(record_set.fields, parents=[record_set])
+            self._validate_field_sources(
+                record_set.fields, record_set_has_data=record_set.data is not None
+            )
 
         # Back-fill the graph in every node.
         self.ctx.graph = from_nodes_to_graph(self)

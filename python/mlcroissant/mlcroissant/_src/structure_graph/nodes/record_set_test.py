@@ -9,6 +9,7 @@ from mlcroissant._src.core.context import Context
 from mlcroissant._src.core.context import CroissantVersion
 from mlcroissant._src.structure_graph.base_node import Node
 from mlcroissant._src.structure_graph.nodes.field import Field
+from mlcroissant._src.structure_graph.nodes.source import Source
 from mlcroissant._src.structure_graph.nodes.record_set import get_parent_uuid
 from mlcroissant._src.structure_graph.nodes.record_set import RecordSet
 from mlcroissant._src.tests.nodes import create_test_field
@@ -51,7 +52,7 @@ from mlcroissant._src.tests.nodes import create_test_record_set
 )
 def test_invalid_data(data, error):
     ctx = Context()
-    field = create_test_field(ctx=ctx)
+    field = create_test_field(ctx=ctx, source=Source(ctx=ctx, field="record_set/field"))
     create_test_record_set(
         ctx=ctx,
         data=data,

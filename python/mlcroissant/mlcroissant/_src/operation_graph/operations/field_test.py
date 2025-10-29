@@ -324,21 +324,30 @@ def test_extract_lines(separator):
         # Capturing group
         [
             "train1234",
-            Source(transforms=[Transform(regex="(train|val)\\d\\d\\d\\d")]),
+            Source(
+                field="record_set/field",
+                transforms=[Transform(regex="(train|val)\\d\\d\\d\\d")],
+            ),
             DataType.TEXT,
             "train",
             False,
         ],
         [
             ["train1234", "train5678", "val1111"],
-            Source(transforms=[Transform(regex="(train|val)\\d\\d\\d\\d")]),
+            Source(
+                field="record_set/field",
+                transforms=[Transform(regex="(train|val)\\d\\d\\d\\d")],
+            ),
             DataType.TEXT,
             ["train", "train", "val"],
             True,
         ],
         [
             epath.Path("path/to/train1234"),
-            Source(transforms=[Transform(regex=".*/(train|val)\\d\\d\\d\\d")]),
+            Source(
+                field="record_set/field",
+                transforms=[Transform(regex=".*/(train|val)\\d\\d\\d\\d")],
+            ),
             DataType.TEXT,
             "train",
             False,
@@ -346,28 +355,40 @@ def test_extract_lines(separator):
         # Non working capturing group
         [
             "foo1234",
-            Source(transforms=[Transform(regex="(train|val)\\d\\d\\d\\d")]),
+            Source(
+                field="record_set/field",
+                transforms=[Transform(regex="(train|val)\\d\\d\\d\\d")],
+            ),
             DataType.TEXT,
             "foo1234",
             False,
         ],
         [
             {"one": {"two": "expected_value"}, "three": "non_expected_value"},
-            Source(transforms=[Transform(json_path="one.two")]),
+            Source(
+                field="record_set/field",
+                transforms=[Transform(json_path="one.two")],
+            ),
             DataType.TEXT,
             "expected_value",
             False,
         ],
         [
             pd.Timestamp("2024-12-10 12:00:00"),
-            Source(transforms=[Transform(format="%Y-%m-%d")]),
+            Source(
+                field="record_set/field",
+                transforms=[Transform(format="%Y-%m-%d")],
+            ),
             DataType.DATE,
             "2024-12-10",
             False,
         ],
         [
             "2024-12-10 12:00:00",
-            Source(transforms=[Transform(format="%Y-%m-%d")]),
+            Source(
+                field="record_set/field",
+                transforms=[Transform(format="%Y-%m-%d")],
+            ),
             DataType.DATE,
             "2024-12-10",
             False,
@@ -383,6 +404,7 @@ def test_apply_transforms_fn(value, source, data_type, expected_value, repeated)
 
 def test_apply_multiple_transforms_fn():
     source = Source(
+        field="record_set/field",
         transforms=[
             Transform(json_path="repeated_content"),
             Transform(json_path="content"),

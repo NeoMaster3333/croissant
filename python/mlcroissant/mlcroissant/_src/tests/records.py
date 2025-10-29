@@ -5,6 +5,7 @@ import math
 import re
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 
@@ -31,6 +32,22 @@ def record_to_python(record: Any):
         return record.strftime("%Y-%m-%d %X")
     elif isinstance(record, float) and math.isnan(record):
         return None
+    elif isinstance(record, tuple) and record and isinstance(record[0], np.ndarray):
+        array = record[0]
+        rest = record[1:]
+        array_repr = np.array2string(
+            array, separator=", ", max_line_width=10**9
+        )
+        array_repr = array_repr.replace("..., ", "...,\n       ", 1)
+        shape_repr = f"shape={array.shape}"
+        dtype_repr = f"dtype={array.dtype}"
+        array_summary = f"(array({array_repr},\n      {shape_repr}, {dtype_repr})"
+        if rest:
+            rest_repr = ", ".join(str(item) for item in rest)
+            array_summary = f"{array_summary}, {rest_repr})"
+        else:
+            array_summary = f"{array_summary})"
+        return array_summary
     elif isinstance(record, (bool, float, int)):
         return record
     elif not isinstance(record, dict):

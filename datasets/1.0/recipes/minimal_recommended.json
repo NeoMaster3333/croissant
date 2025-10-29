@@ -73,6 +73,14 @@
           "name": "examples/name",
           "description": "The first column contains the name.",
           "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "minimal.csv"
+            },
+            "extract": {
+              "column": "name"
+            }
+          },
           "references": {
             "fileObject": {
               "@id": "minimal.csv"
@@ -88,6 +96,14 @@
           "name": "examples/age",
           "description": "The second column contains the age.",
           "dataType": "sc:Integer",
+          "source": {
+            "fileObject": {
+              "@id": "minimal.csv"
+            },
+            "extract": {
+              "column": "age"
+            }
+          },
           "references": {
             "fileObject": {
               "@id": "minimal.csv"

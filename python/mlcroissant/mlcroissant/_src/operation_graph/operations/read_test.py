@@ -51,14 +51,23 @@ def test_str_representation():
 
 def test_get_sampling_rate():
     node = create_test_file_object()
-    audio_field = create_test_field(source=Source(sampling_rate=3000))
+    audio_field = create_test_field(
+        ctx=node.ctx,
+        source=Source(ctx=node.ctx, file_object=node.uuid, sampling_rate=3000),
+    )
     assert _get_sampling_rate(node=node, fields=(audio_field,)) == 3000
 
 
 def test_get_sampling_rate_with_value_error():
     node = create_test_file_object()
-    audio_field_1 = create_test_field(source=Source(sampling_rate=2000))
-    audio_field_2 = create_test_field(source=Source(sampling_rate=3000))
+    audio_field_1 = create_test_field(
+        ctx=node.ctx,
+        source=Source(ctx=node.ctx, file_object=node.uuid, sampling_rate=2000),
+    )
+    audio_field_2 = create_test_field(
+        ctx=node.ctx,
+        source=Source(ctx=node.ctx, file_object=node.uuid, sampling_rate=3000),
+    )
     with pytest.raises(
         ValueError,
         match=(
@@ -101,16 +110,45 @@ def test_explicit_message_when_pyarrow_is_not_installed():
 
 
 def test_reading_method():
-    json_field = create_test_field(source=Source(extract=Extract(json_path="path")))
-    column_field = create_test_field(source=Source(extract=Extract(column="column")))
+    json_field = create_test_field(
+        ctx=empty_file_object.ctx,
+        source=Source(
+            ctx=empty_file_object.ctx,
+            file_object=empty_file_object.uuid,
+            extract=Extract(json_path="path"),
+        ),
+    )
+    column_field = create_test_field(
+        ctx=empty_file_object.ctx,
+        source=Source(
+            ctx=empty_file_object.ctx,
+            file_object=empty_file_object.uuid,
+            extract=Extract(column="column"),
+        ),
+    )
     content_field = create_test_field(
-        source=Source(extract=Extract(file_property=FileProperty.content))
+        ctx=empty_file_object.ctx,
+        source=Source(
+            ctx=empty_file_object.ctx,
+            file_object=empty_file_object.uuid,
+            extract=Extract(file_property=FileProperty.content),
+        ),
     )
     lines_field = create_test_field(
-        source=Source(extract=Extract(file_property=FileProperty.lines))
+        ctx=empty_file_object.ctx,
+        source=Source(
+            ctx=empty_file_object.ctx,
+            file_object=empty_file_object.uuid,
+            extract=Extract(file_property=FileProperty.lines),
+        ),
     )
     filename = create_test_field(
-        source=Source(extract=Extract(file_property=FileProperty.filename))
+        ctx=empty_file_object.ctx,
+        source=Source(
+            ctx=empty_file_object.ctx,
+            file_object=empty_file_object.uuid,
+            extract=Extract(file_property=FileProperty.filename),
+        ),
     )
     assert (
         _reading_method(empty_file_object, (json_field, filename)) == ReadingMethod.JSON

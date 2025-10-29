@@ -11,6 +11,7 @@ from mlcroissant._src.core.context import Context
 from mlcroissant._src.core.context import CroissantVersion
 from mlcroissant._src.structure_graph.base_node import Node
 from mlcroissant._src.structure_graph.nodes.field import Field
+from mlcroissant._src.structure_graph.nodes.metadata import Metadata
 from mlcroissant._src.structure_graph.nodes.source import Source
 from mlcroissant._src.tests.nodes import create_test_field
 from mlcroissant._src.tests.nodes import create_test_node
@@ -34,17 +35,27 @@ def test_checks_are_performed(conforms_to, field_uuid):
     ["array_shape", "array_shape_tuple"], [["1,2,3", (1, 2, 3)], [None, (-1,)]]
 )
 def test_array_shape_tuple(array_shape, array_shape_tuple):
-    field = create_test_field(is_array=True, array_shape=array_shape)
+    ctx = Context()
+    field = create_test_field(
+        ctx=ctx,
+        source=Source(ctx=ctx, field="record_set/field"),
+        is_array=True,
+        array_shape=array_shape,
+    )
     assert field.array_shape_tuple == array_shape_tuple
 
 
 def test_data_type():
     # data_types can be a string:
-    assert create_test_field(data_types=constants.DataType.BOOL).data_types == [
-        constants.DataType.BOOL
-    ]
-    # ...or a list of strings:
+    ctx = Context()
     assert create_test_field(
+        ctx=ctx, source=Source(ctx=ctx, field="record_set/field"), data_types=constants.DataType.BOOL
+    ).data_types == [constants.DataType.BOOL]
+    # ...or a list of strings:
+    ctx = Context()
+    assert create_test_field(
+        ctx=ctx,
+        source=Source(ctx=ctx, field="record_set/field"),
         data_types=[constants.DataType.BOOL, "http://some-semantic-type"]
     ).data_types == [
         constants.DataType.BOOL,
@@ -52,15 +63,16 @@ def test_data_type():
     ]
 
     # data_type are infered from the field...
-    assert (
-        create_test_field(
-            data_types=[
-                constants.DataType.BOOL,
-                "http://some-semantic-type",
-            ]
-        ).data_type
-        is bool
+    ctx = Context()
+    field = create_test_field(
+        ctx=ctx,
+        source=Source(ctx=ctx, field="record_set/field"),
+        data_types=[
+            constants.DataType.BOOL,
+            "http://some-semantic-type",
+        ],
     )
+    assert field.data_type is bool
     # ...or from the predecessors. See the test case
     # `recordset_missing_context_for_datatype`.
 
@@ -146,7 +158,10 @@ def test_value_with_source_still_validates_source():
             source=Source(ctx=ctx, field="record_set/parent"),
         )
     mocked_check_source.assert_called_once()
-    warnings = ctx.issues.warnings
-    assert len(warnings) == 1
-    warning = next(iter(warnings))
-    assert "`source` and `value`" in warning
+    metadata = Metadata.__new__(Metadata)
+    metadata.ctx = ctx
+    metadata._validate_field_sources([field], record_set_has_data=False)
+    errors = ctx.issues.errors
+    assert len(errors) == 1
+    error = next(iter(errors))
+    assert "mutually exclusive" in error

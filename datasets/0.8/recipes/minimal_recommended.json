@@ -61,6 +61,12 @@
           "name": "name",
           "description": "The first column contains the name.",
           "dataType": "sc:Text",
+          "source": {
+            "distribution": "minimal.csv",
+            "extract": {
+              "column": "name"
+            }
+          },
           "references": {
             "distribution": "minimal.csv",
             "extract": {
@@ -73,6 +79,12 @@
           "name": "age",
           "description": "The second column contains the age.",
           "dataType": "sc:Integer",
+          "source": {
+            "distribution": "minimal.csv",
+            "extract": {
+              "column": "age"
+            }
+          },
           "references": {
             "distribution": "minimal.csv",
             "extract": {
